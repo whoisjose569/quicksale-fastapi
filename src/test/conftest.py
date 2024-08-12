@@ -19,7 +19,7 @@ def engine():
 def tables(engine):
     Base.metadata.create_all(engine)
     yield
-    Base.metadata.drop_all(engine)
+    #Base.metadata.drop_all(engine)
 
 @pytest.fixture(scope='function')
 def db_session(engine, tables):
