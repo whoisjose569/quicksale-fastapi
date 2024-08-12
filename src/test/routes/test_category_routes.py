@@ -33,3 +33,16 @@ def test_list_categories_route(db_session):
         "slug": categories_on_db[0].slug,
         "id": categories_on_db[0].id
     }
+
+def test_delete_category_route(db_session):
+    category_model= CategoryModel(name='Celular', slug='celular')
+    db_session.add(category_model)
+    db_session.commit()
+    
+    response = client.delete(f'/category/delete/{category_model.id}')
+    
+    assert response.status_code == status.HTTP_200_OK
+    
+    category_model = db_session.query(CategoryModel).filter(CategoryModel.id == category_model.id).first()
+    
+    assert category_model is None
