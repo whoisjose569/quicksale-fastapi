@@ -7,7 +7,7 @@ class Category(Base):
     id = Column('id', Integer, primary_key=True, autoincrement=True)
     name = Column('name', String, nullable=False)
     slug = Column('slug', String, nullable=False)
-    Products = relationship("Product", back_populates='category')
+    products = relationship("Product", back_populates='category')
     
 
 class Product(Base):
