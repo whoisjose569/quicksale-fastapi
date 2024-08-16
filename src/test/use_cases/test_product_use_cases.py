@@ -36,6 +36,9 @@ def test_add_product_uc(db_session):
     assert product_on_db.slug == product.slug
     assert product_on_db.price == product.price
     assert product_on_db.stock == product.stock
+    
+    db_session.delete(product_on_db)
+    db_session.commit()
 
 def test_add_product_uc_invalid_category(db_session):
     uc = ProductUseCases(db_session)
