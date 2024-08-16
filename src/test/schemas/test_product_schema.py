@@ -1,5 +1,5 @@
 import pytest
-from schemas.product import Product
+from schemas.product import Product, ProductInput
 
 def test_product_schema():
     product = Product(
@@ -49,3 +49,25 @@ def test_product_schema_invalid_price():
         price = 0,
         stock = 22
     )
+
+def test_product_input_schema():
+    product = Product(
+        name = 'Camisa Nike',
+        slug = 'camisa-nike',
+        price = 22.99,
+        stock = 22
+    )
+    product_input = ProductInput(
+        category_slug ='roupa',
+        product=product
+    )
+    
+    assert product_input.dict() == {
+        "category_slug":'roupa',
+        "product":{
+            "name" : 'Camisa Nike',
+            "slug": 'camisa-nike',
+            "price" : 22.99,
+            "stock" : 22
+        }
+    }
