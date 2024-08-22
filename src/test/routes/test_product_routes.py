@@ -48,3 +48,49 @@ def test_add_product_route_invalid_category_slug(db_session):
     
     assert len(products_on_db) == 0
     
+def test_update_product_route(db_session):
+    category_model= CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category_model)
+    db_session.commit()
+    
+    new_product = {
+        "category_slug": "roupa",
+        "product": {
+            "name": "Camisa Nike",
+            "slug": "camisa-nike",
+            "price": 23.99,
+            "stock": 20
+        }
+    }
+    
+    response = cliente.post('/product/add', json=new_product)
+    product_in_db = db_session.query(ProductModel).filter_by(slug="camisa-nike").first()
+
+    
+    body = {
+        "name": "Updated camisa",
+        "slug": "updated-camisa",
+        "price": 23.88,
+        "stock": 20
+    }
+    
+
+    response = cliente.put(f'/product/update/{product_in_db.id}', json=body)
+    
+    
+    assert response.status_code == status.HTTP_200_OK
+    
+    new_product_on_db = db_session.query(ProductModel).filter_by(id=product_in_db.id).first()
+    db_session.refresh(new_product_on_db)
+    
+    assert new_product_on_db.name == "Updated camisa"
+    assert new_product_on_db.slug == "updated-camisa"
+    assert new_product_on_db.price == 23.88
+    assert new_product_on_db.stock == 20
+    
+    db_session.delete(category_model)
+    
+    db_session.delete(new_product_on_db)
+    db_session.commit()
+    
+    
