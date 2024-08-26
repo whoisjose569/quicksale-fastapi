@@ -89,3 +89,29 @@ def test_update_product(db_session):
     db_session.delete(category)
     db_session.commit()
 
+def test_delete_product(db_session):
+    category = CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category)
+    db_session.commit()
+    
+    product_on_db = ProductModel(name= 'Camisa nike', 
+                           slug= 'camisa-nike',
+                           price=100.99,
+                           stock=20,
+                           category_id=category.id)
+    
+    db_session.add(product_on_db)
+    db_session.commit()
+    
+    uc = ProductUseCases(db_session=db_session)
+    uc.delete_product(id=product_on_db.id)
+    
+    products_on_db = db_session.query(ProductModel).all()
+    
+    assert len(products_on_db) == 0 
+
+def test_delete_product_non_exist(db_session):
+    uc = ProductUseCases(db_session=db_session)
+    
+    with pytest.raises(HTTPException):
+        uc.delete_product(id=999)

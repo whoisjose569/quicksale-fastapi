@@ -92,5 +92,27 @@ def test_update_product_route(db_session):
     
     db_session.delete(new_product_on_db)
     db_session.commit()
+
+def test_delete_product_route(db_session):
+    category = CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category)
+    db_session.commit()
+    
+    product_on_db = ProductModel(name= 'Camisa nike', 
+                           slug= 'camisa-nike',
+                           price=100.99,
+                           stock=20,
+                           category_id=category.id)
+    
+    db_session.add(product_on_db)
+    db_session.commit()
+    
+    response = cliente.delete(f'/product/delete/{product_on_db.id}')
+    
+    assert response.status_code == status.HTTP_200_OK
+    
+    products_on_db = db_session.query(ProductModel).all()
+    
+    assert len(products_on_db) == 0
     
     
