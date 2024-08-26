@@ -1,11 +1,12 @@
 import pytest
 from fastapi.exceptions import HTTPException
 from db.models import Product as ProductModel
-from schemas.product import Product
+from schemas.product import Product, ProductOutput
 from use_cases.category import CategoryUseCases
 from use_cases.product import ProductUseCases
 from db.models import Category as CategoryModel
 from schemas.category import Category
+
 
 def test_add_product_uc(db_session):
     uc = ProductUseCases(db_session)
@@ -115,3 +116,43 @@ def test_delete_product_non_exist(db_session):
     
     with pytest.raises(HTTPException):
         uc.delete_product(id=999)
+
+def test_list_products(db_session):
+    category = CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category)
+    db_session.commit()
+    
+    products = [ProductModel(name= 'Camisa Nike', slug= 'camisa-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Camisa Adidas', slug= 'camisa-adidas', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Camisa Hurley', slug= 'camisa-hurley', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Camisa Dc', slug= 'camisa-dc', price=100.99, stock=20, category_id=category.id),
+    ]
+       
+    for product in products:
+        db_session.add(product)
+    db_session.commit()
+    
+    for product in products:
+        db_session.refresh(product)
+    
+    
+    uc = ProductUseCases(db_session=db_session)
+    
+    list_products = uc.list_products()
+    for product in products:
+        db_session.refresh(product)
+    
+    assert len(products) == 4
+    assert type(list_products[0]) == ProductOutput
+    assert list_products[0].name == products[0].name
+    assert list_products[0].slug == products[0].slug
+    assert list_products[0].price == products[0].price
+    assert list_products[0].stock == products[0].stock
+    assert list_products[0].category.name == products[0].category.name
+    
+    for product in products:
+        db_session.delete(product)
+    db_session.commit()
+    
+    db_session.delete(category)
+    db_session.commit()
