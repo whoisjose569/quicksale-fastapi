@@ -156,3 +156,43 @@ def test_list_products(db_session):
     
     db_session.delete(category)
     db_session.commit()
+
+def test_list_products_with_search(db_session):
+    category = CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category)
+    db_session.commit()
+    
+    products = [ProductModel(name= 'Camisa Nike', slug= 'camisa-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Blusa Nike', slug= 'blusa-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'tenis', slug= 'tenis-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Camisa Dc', slug= 'camisa-dc', price=100.99, stock=20, category_id=category.id),
+    ]
+       
+    for product in products:
+        db_session.add(product)
+    db_session.commit()
+    
+    for product in products:
+        db_session.refresh(product)
+    
+    
+    uc = ProductUseCases(db_session=db_session)
+    
+    list_products = uc.list_products(search='nike')
+    for product in products:
+        db_session.refresh(product)
+    
+    assert len(products) == 4
+    assert type(list_products[0]) == ProductOutput
+    assert list_products[0].name == products[0].name
+    assert list_products[0].slug == products[0].slug
+    assert list_products[0].price == products[0].price
+    assert list_products[0].stock == products[0].stock
+    assert list_products[0].category.name == products[0].category.name
+    
+    for product in products:
+        db_session.delete(product)
+    db_session.commit()
+    
+    db_session.delete(category)
+    db_session.commit()
