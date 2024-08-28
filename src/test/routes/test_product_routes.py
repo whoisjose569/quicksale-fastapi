@@ -158,4 +158,45 @@ def test_list_product_route(db_session):
     db_session.delete(category)
     db_session.commit()
     
+def test_list_product_route_with_search(db_session):
+    category = CategoryModel(name='Roupa', slug='roupa')
+    db_session.add(category)
+    db_session.commit()
     
+    products = [ProductModel(name= 'Camisa Nike', slug= 'camisa-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Blusa Nike', slug= 'blusa-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'tenis', slug= 'tenis-nike', price=100.99, stock=20, category_id=category.id),
+                ProductModel(name= 'Camisa Dc', slug= 'camisa-dc', price=100.99, stock=20, category_id=category.id),
+    ]
+       
+    for product in products:
+        db_session.add(product)
+    db_session.commit()
+    
+    for product in products:
+        db_session.refresh(product)
+    
+    response = cliente.get('/product/list?search=nike')
+    
+    data = response.json()
+    
+    assert len(data) == 3
+    
+    assert data[0] == {
+        'id': products[0].id,
+        'name': products[0].name,
+        'slug': products[0].slug,
+        'price': products[0].price,
+        'stock': products[0].stock,
+        'category': {
+            'name': products[0].category.name,
+            'slug': products[0].category.slug
+        }
+        
+    }
+    for product in products:
+        db_session.delete(product)
+    db_session.commit()
+    
+    db_session.delete(category)
+    db_session.commit() 
