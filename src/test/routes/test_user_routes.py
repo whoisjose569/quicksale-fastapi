@@ -41,3 +41,67 @@ def test_register_user_route_user_already_exists(db_session):
     db_session.delete(user)
     db_session.commit()
     
+def test_user_login_route(db_session):
+    user = UserModel(username='jose', password=crypt_context.hash('pass#'))
+    db_session.add(user)
+    db_session.commit()
+    
+    body = {
+        'username': user.username,
+        'password': 'pass#'
+    }    
+    
+    header = {'Content-Type': 'application/x-www-form-urlencoded'}
+    
+    response = client.post('/user/login', data=body, headers=header)
+    
+    assert response.status_code == status.HTTP_200_OK
+    
+    data = response.json()
+    
+    assert 'access_token' in data
+    assert 'expires_at' in data
+    
+    db_session.delete(user)
+    db_session.commit()
+
+def test_user_login_route_invalid_username(db_session):
+    user = UserModel(username='jose', password=crypt_context.hash('pass#'))
+    db_session.add(user)
+    db_session.commit()
+    
+    body = {
+        'username': 'invalid',
+        'password': 'pass#'
+    }    
+    
+    header = {'Content-Type': 'application/x-www-form-urlencoded'}
+    
+    response = client.post('/user/login', data=body, headers=header)
+    
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    
+    db_session.delete(user)
+    db_session.commit()
+
+def test_user_login_route_invalid_password(db_session):
+    user = UserModel(username='jose', password=crypt_context.hash('pass#'))
+    db_session.add(user)
+    db_session.commit()
+    
+    body = {
+        'username': user.username,
+        'password': 'invalid'
+    }    
+    
+    header = {'Content-Type': 'application/x-www-form-urlencoded'}
+    
+    response = client.post('/user/login', data=body, headers=header)
+    
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    
+    db_session.delete(user)
+    db_session.commit()
+
