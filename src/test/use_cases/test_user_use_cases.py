@@ -4,6 +4,7 @@ from schemas.user import User
 from db.models import User as UserModel
 from use_cases.user import UserUseCases
 from fastapi.exceptions import HTTPException
+from datetime import datetime, timedelta
 
 crypt_context = CryptContext(schemes=['sha256_crypt'], deprecated="auto")
 
@@ -44,4 +45,69 @@ def test_register_user_username_already_exists(db_session):
     
     db_session.delete(user_on_db)
     db_session.commit()
+
+def test_user_login(db_session):
+    user_on_db = UserModel(
+        username='Jose',
+        password=crypt_context.hash('pass#')
+    )
+    
+    db_session.add(user_on_db)
+    db_session.commit()
+    
+    user = User(
+        username=user_on_db.username,
+        password='pass#'
+    )
+    
+    uc = UserUseCases(db_session=db_session)
+    token_data = uc.user_login(user=user, expires_in=30)
+    
+    assert token_data.expires_at < datetime.utcnow() + timedelta(31)
+    
+    db_session.delete(user_on_db)
+    db_session.commit()
+
+def test_user_login_invalid_username(db_session):
+    user_on_db = UserModel(
+        username='Jose',
+        password=crypt_context.hash('pass#')
+    )
+    
+    db_session.add(user_on_db)
+    db_session.commit()   
+    
+    user = User(
+        username='invalid',
+        password='pass#'
+    )
+    
+    uc = UserUseCases(db_session=db_session)
+    with pytest.raises(HTTPException):
+        uc.user_login(user=user, expires_in=30)
+    
+    db_session.delete(user_on_db)
+    db_session.commit()    
+
+def test_user_login_invalid_password(db_session):
+    user_on_db = UserModel(
+        username='Jose',
+        password=crypt_context.hash('pass#')
+    )
+    
+    db_session.add(user_on_db)
+    db_session.commit()   
+        
+    user = User(
+        username=user_on_db.username,
+        password='invalid'
+    )
+    
+    uc = UserUseCases(db_session=db_session)
+    with pytest.raises(HTTPException):
+        uc.user_login(user=user, expires_in=30)
+    
+    db_session.delete(user_on_db)
+    db_session.commit()         
+    
     
