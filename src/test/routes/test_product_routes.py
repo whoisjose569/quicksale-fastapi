@@ -4,7 +4,9 @@ from db.models import Product as ProductModel
 from main import app
 from db.models import Category as CategoryModel
 
-cliente = TestClient(app)
+client = TestClient(app)
+headers = {"Authorization": "Bearer token"}
+client.headers = headers
 
 def test_add_product_route(db_session):
     categories_on_db = db_session.query(CategoryModel).all()
@@ -18,7 +20,7 @@ def test_add_product_route(db_session):
         }
     }
     
-    response = cliente.post('/product/add', json=body)
+    response = client.post('/product/add', json=body)
     
     assert response.status_code == status.HTTP_201_CREATED
     
@@ -40,7 +42,7 @@ def test_add_product_route_invalid_category_slug(db_session):
         }
     }
     
-    response = cliente.post('/product/add', json=body)
+    response = client.post('/product/add', json=body)
     
     assert response.status_code == status.HTTP_404_NOT_FOUND
     
@@ -63,7 +65,7 @@ def test_update_product_route(db_session):
         }
     }
     
-    response = cliente.post('/product/add', json=new_product)
+    response = client.post('/product/add', json=new_product)
     product_in_db = db_session.query(ProductModel).filter_by(slug="camisa-nike").first()
 
     
@@ -75,7 +77,7 @@ def test_update_product_route(db_session):
     }
     
 
-    response = cliente.put(f'/product/update/{product_in_db.id}', json=body)
+    response = client.put(f'/product/update/{product_in_db.id}', json=body)
     
     
     assert response.status_code == status.HTTP_200_OK
@@ -107,7 +109,7 @@ def test_delete_product_route(db_session):
     db_session.add(product_on_db)
     db_session.commit()
     
-    response = cliente.delete(f'/product/delete/{product_on_db.id}')
+    response = client.delete(f'/product/delete/{product_on_db.id}')
     
     assert response.status_code == status.HTTP_200_OK
     
@@ -133,7 +135,7 @@ def test_list_product_route(db_session):
     for product in products:
         db_session.refresh(product)
     
-    response = cliente.get('/product/list')
+    response = client.get('/product/list')
     
     data = response.json()
     
@@ -176,7 +178,7 @@ def test_list_product_route_with_search(db_session):
     for product in products:
         db_session.refresh(product)
     
-    response = cliente.get('/product/list?search=nike')
+    response = client.get('/product/list?search=nike')
     
     data = response.json()
     

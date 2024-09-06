@@ -5,6 +5,11 @@ from db.models import User as UserModel
 from use_cases.user import UserUseCases
 from fastapi.exceptions import HTTPException
 from datetime import datetime, timedelta
+from jose import jwt
+from decouple import config
+
+SECRET_KEY = config('SECRET_KEY')
+ALGORITHM = config('ALGORITHM')
 
 crypt_context = CryptContext(schemes=['sha256_crypt'], deprecated="auto")
 
@@ -110,4 +115,49 @@ def test_user_login_invalid_password(db_session):
     db_session.delete(user_on_db)
     db_session.commit()         
     
+def test_verify_token(db_session):
+    user_on_db = UserModel(
+        username='jose',
+        password=crypt_context.hash('pass#')
+    )
     
+    db_session.add(user_on_db)
+    db_session.commit()
+    
+    uc = UserUseCases(db_session=db_session)
+    
+    data = {
+        'sub': user_on_db.username,
+        'exp': datetime.utcnow() + timedelta(minutes=30)
+    }   
+    
+    access_token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    
+    uc.verify_token(token=access_token)
+
+    db_session.delete(user_on_db)
+    db_session.commit()
+    
+def test_verify_token_expired(db_session):
+    user_on_db = UserModel(
+        username='jose',
+        password=crypt_context.hash('pass#')
+    )
+    
+    db_session.add(user_on_db)
+    db_session.commit()
+    
+    uc = UserUseCases(db_session=db_session)
+    
+    data = {
+        'sub': user_on_db.username,
+        'exp': datetime.utcnow() - timedelta(minutes=30)
+    }   
+    
+    access_token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    
+    with pytest.raises(HTTPException):
+        uc.verify_token(token=access_token)
+
+    db_session.delete(user_on_db)
+    db_session.commit()    
